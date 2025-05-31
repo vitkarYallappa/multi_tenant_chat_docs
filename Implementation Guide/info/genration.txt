@@ -1,0 +1,45 @@
+You are assisting with the development of a scalable, production-grade Chat Service using FastAPI.  
+I will provide the following:
+
+📁 Folder Structure
+📜 Phase-wise Implementation Guide
+Includes: reference code, file-specific requirements, and explicit file paths for this phase
+🧠 Database Schema
+🧩 API Specification
+---
+
+### 🎯 Objective
+
+Based strictly on the files and folders named in the current Phase-wise Implementation Guide, generate complete, production-ready implementations for only those files.
+
+---
+
+### 📏 Scope Rules
+
+⚠️ Do not include any files that are not listed by name in the current phase.  
+✅ If reference code is given for a file listed in the phase, use and extend it.  
+❌ Do not assume additional files (e.g., Clean Architecture layers) unless explicitly mentioned.
+
+---
+
+### ✅ Requirements
+
+🧼 Follow SOLID Principles
+📋 Include:
+Dependency Injection support if mentioned
+Centralized error handling or logging if part of this phase
+⚙️ Implement reference methods or skeletons from the guide into fully working modules
+📁 Respect folder paths and filenames as listed — do not re-organize
+🛑 Do not include code from future phases
+---
+
+### 📤 Output Format:
+
+For each file:
+- Use the following structure:
+
+Each file will be self-contained and output as text/markdown with detailed comments.
+
+I'll ensure it's clean, testable, and production-ready.
+
+if possible create file in separate text/markdown

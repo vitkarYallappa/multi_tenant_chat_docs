@@ -199,88 +199,79 @@ sequenceDiagram
 
 ```mermaid
 graph TB
-    subgraph "API Layer"
+
+    subgraph API_Layer
         CHAT_API[Chat Routes]
         CONV_API[Conversation Routes]
         WEBHOOK_API[Webhook Routes]
         HEALTH_API[Health Routes]
     end
-    
-    subgraph "Middleware Stack"
+
+    subgraph Middleware_Stack
         AUTH_MW[Auth Middleware]
         RATE_MW[Rate Limit Middleware]
         TENANT_MW[Tenant Middleware]
         ERROR_MW[Error Handler]
         LOG_MW[Logging Middleware]
     end
-    
-    subgraph "Service Layer"
+
+    subgraph Service_Layer
         direction TB
-        
-        subgraph "Core Services"
-            MSG_SERVICE[Message Service<br/>• process_message()<br/>• handle_webhook()<br/>• generate_response()]
-            
-            CONV_SERVICE[Conversation Service<br/>• get_conversation_history()<br/>• list_conversations()<br/>• close_conversation()]
-            
-            SESS_SERVICE[Session Service<br/>• create_session()<br/>• update_context()<br/>• cleanup_expired()]
-            
-            CHAN_SERVICE[Channel Service<br/>• send_message()<br/>• validate_recipient()<br/>• process_webhook()]
+
+        subgraph Core_Services
+            MSG_SERVICE[Message Service\n- process_message\n- handle_webhook\n- generate_response]
+            CONV_SERVICE[Conversation Service\n- get_conversation_history\n- list_conversations\n- close_conversation]
+            SESS_SERVICE[Session Service\n- create_session\n- update_context\n- cleanup_expired]
+            CHAN_SERVICE[Channel Service\n- send_message\n- validate_recipient\n- process_webhook]
         end
-        
-        subgraph "Supporting Services"
-            DELIVERY_SERVICE[Delivery Service<br/>• track_delivery()<br/>• retry_failed()<br/>• update_status()]
-            
-            AUDIT_SERVICE[Audit Service<br/>• log_activity()<br/>• compliance_check()<br/>• generate_reports()]
+
+        subgraph Supporting_Services
+            DELIVERY_SERVICE[Delivery Service\n- track_delivery\n- retry_failed\n- update_status]
+            AUDIT_SERVICE[Audit Service\n- log_activity\n- compliance_check\n- generate_reports]
         end
     end
-    
-    subgraph "Repository Layer"
-        CONV_REPO[Conversation Repository<br/>• create()<br/>• get_by_id()<br/>• update()]
-        
-        MSG_REPO[Message Repository<br/>• create()<br/>• get_by_conversation()<br/>• get_last_message()]
-        
-        SESS_REPO[Session Repository<br/>• create_session()<br/>• get_session()<br/>• extend_session()]
-        
-        RATE_REPO[Rate Limit Repository<br/>• check_rate_limit()<br/>• increment_counter()<br/>• reset_limits()]
+
+    subgraph Repository_Layer
+        CONV_REPO[Conversation Repository\n- create\n- get_by_id\n- update]
+        MSG_REPO[Message Repository\n- create\n- get_by_conversation\n- get_last_message]
+        SESS_REPO[Session Repository\n- create_session\n- get_session\n- extend_session]
+        RATE_REPO[Rate Limit Repository\n- check_rate_limit\n- increment_counter\n- reset_limits]
     end
-    
-    subgraph "Data Sources"
-        MONGODB[(MongoDB<br/>Conversations<br/>Messages<br/>Users)]
-        
-        REDIS[(Redis<br/>Sessions<br/>Rate Limits<br/>Cache)]
+
+    subgraph Data_Sources
+        MONGODB[(MongoDB\n- Conversations\n- Messages\n- Users)]
+        REDIS[(Redis\n- Sessions\n- Rate Limits\n- Cache)]
     end
-    
-    subgraph "External Dependencies"
-        MCP_CLIENT[MCP Engine Client<br/>• process_message()<br/>• update_context()]
-        
-        SECURITY_CLIENT[Security Hub Client<br/>• validate_token()<br/>• check_permissions()]
-        
-        EVENT_PUBLISHER[Event Publisher<br/>• publish_event()<br/>• publish_batch()]
+
+    subgraph External_Dependencies
+        MCP_CLIENT[MCP Engine Client\n- process_message\n- update_context]
+        SECURITY_CLIENT[Security Hub Client\n- validate_token\n- check_permissions]
+        EVENT_PUBLISHER[Event Publisher\n- publish_event\n- publish_batch]
     end
 
     %% API to Middleware
     CHAT_API --> AUTH_MW
     CONV_API --> AUTH_MW
     WEBHOOK_API --> RATE_MW
-    
+
     %% Middleware Chain
     AUTH_MW --> RATE_MW
     RATE_MW --> TENANT_MW
     TENANT_MW --> ERROR_MW
     ERROR_MW --> LOG_MW
-    
+
     %% Middleware to Services
     LOG_MW --> MSG_SERVICE
     LOG_MW --> CONV_SERVICE
     LOG_MW --> SESS_SERVICE
-    
+
     %% Service Dependencies
     MSG_SERVICE --> CONV_SERVICE
     MSG_SERVICE --> SESS_SERVICE
     MSG_SERVICE --> CHAN_SERVICE
     MSG_SERVICE --> DELIVERY_SERVICE
     MSG_SERVICE --> AUDIT_SERVICE
-    
+
     %% Services to Repositories
     MSG_SERVICE --> CONV_REPO
     MSG_SERVICE --> MSG_REPO
@@ -288,24 +279,26 @@ graph TB
     CONV_SERVICE --> MSG_REPO
     SESS_SERVICE --> SESS_REPO
     RATE_MW --> RATE_REPO
-    
+
     %% Repositories to Data
     CONV_REPO --> MONGODB
     MSG_REPO --> MONGODB
     SESS_REPO --> REDIS
     RATE_REPO --> REDIS
-    
+
     %% External Dependencies
     MSG_SERVICE -.->|gRPC| MCP_CLIENT
     AUTH_MW -.->|gRPC| SECURITY_CLIENT
     MSG_SERVICE --> EVENT_PUBLISHER
     AUDIT_SERVICE --> EVENT_PUBLISHER
 
+    %% Styles
     style MSG_SERVICE fill:#e3f2fd
     style CONV_SERVICE fill:#f3e5f5
     style SESS_SERVICE fill:#e8f5e8
     style MONGODB fill:#ffebee
     style REDIS fill:#fff3e0
+
 ```
 
 ## 4. Channel & Processor Architecture
@@ -313,100 +306,100 @@ graph TB
 ```mermaid
 graph TB
     subgraph "Channel Factory"
-        CHAN_FACTORY[Channel Factory<br/>• get_channel(type)<br/>• register_channel()<br/>• validate_config()]
+        CHAN_FACTORY["Channel Factory<br>– get_channel [type]<br>– register_channel<br>– validate_config"]
     end
-    
+
     subgraph "Channel Implementations"
-        BASE_CHANNEL[Base Channel<br/>Abstract Interface]
-        
-        WEB_CHANNEL[Web Channel<br/>• HTTP/WebSocket<br/>• Real-time messaging<br/>• File uploads]
-        
-        WHATSAPP_CHANNEL[WhatsApp Channel<br/>• Business API<br/>• Media support<br/>• Template messages]
-        
-        SLACK_CHANNEL[Slack Channel<br/>• Bot API<br/>• Interactive buttons<br/>• Threaded responses]
-        
-        TEAMS_CHANNEL[Teams Channel<br/>• Bot Framework<br/>• Cards & actions<br/>• Meeting integration]
-        
-        MESSENGER_CHANNEL[Messenger Channel<br/>• Graph API<br/>• Persistent menu<br/>• Quick replies]
+        BASE_CHANNEL["Base Channel<br><i>Abstract Interface</i>"]
+
+        WEB_CHANNEL["Web Channel<br>– HTTP / WebSocket<br>– Real-time messaging<br>– File uploads"]
+
+        WHATSAPP_CHANNEL["WhatsApp Channel<br>– Business API<br>– Media support<br>– Template messages"]
+
+        SLACK_CHANNEL["Slack Channel<br>– Bot API<br>– Interactive buttons<br>– Threaded responses"]
+
+        TEAMS_CHANNEL["Teams Channel<br>– Bot Framework<br>– Cards & actions<br>– Meeting integration"]
+
+        MESSENGER_CHANNEL["Messenger Channel<br>– Graph API<br>– Persistent menu<br>– Quick replies"]
     end
-    
+
     subgraph "Processor Factory"
-        PROC_FACTORY[Processor Factory<br/>• get_processor(type)<br/>• register_processor()<br/>• validate_input()]
+        PROC_FACTORY["Processor Factory<br>– get_processor [type]<br>– register_processor<br>– validate_input"]
     end
-    
+
     subgraph "Message Processors"
-        BASE_PROCESSOR[Base Processor<br/>Abstract Interface]
-        
-        TEXT_PROCESSOR[Text Processor<br/>• Language detection<br/>• Entity extraction<br/>• Sentiment analysis<br/>• Content safety]
-        
-        MEDIA_PROCESSOR[Media Processor<br/>• File validation<br/>• Metadata extraction<br/>• Virus scanning<br/>• Format conversion]
-        
-        LOCATION_PROCESSOR[Location Processor<br/>• Coordinate validation<br/>• Geocoding<br/>• Privacy checks]
+        BASE_PROCESSOR["Base Processor<br><i>Abstract Interface</i>"]
+
+        TEXT_PROCESSOR["Text Processor<br>– Language detection<br>– Entity extraction<br>– Sentiment analysis<br>– Content safety"]
+
+        MEDIA_PROCESSOR["Media Processor<br>– File validation<br>– Metadata extraction<br>– Virus scanning<br>– Format conversion"]
+
+        LOCATION_PROCESSOR["Location Processor<br>– Coordinate validation<br>– Geocoding<br>– Privacy checks"]
     end
-    
+
     subgraph "Normalizers"
-        MSG_NORMALIZER[Message Normalizer<br/>• Standardize format<br/>• Remove noise<br/>• Apply rules]
-        
-        CONTENT_NORMALIZER[Content Normalizer<br/>• Text cleaning<br/>• Encoding fixes<br/>• Character limits]
-        
-        METADATA_NORMALIZER[Metadata Normalizer<br/>• Extract headers<br/>• User agent parsing<br/>• IP validation]
+        MSG_NORMALIZER["Message Normalizer<br>– Standardize format<br>– Remove noise<br>– Apply rules"]
+
+        CONTENT_NORMALIZER["Content Normalizer<br>– Text cleaning<br>– Encoding fixes<br>– Character limits"]
+
+        METADATA_NORMALIZER["Metadata Normalizer<br>– Extract headers<br>– User agent parsing<br>– IP validation"]
     end
-    
+
     subgraph "Processing Pipeline"
-        PIPELINE[Processing Pipeline<br/>• Sequential stages<br/>• Error handling<br/>• Performance tracking]
-        
+        PIPELINE["Processing Pipeline<br>– Sequential stages<br>– Error handling<br>– Performance tracking"]
+
         subgraph "Pipeline Stages"
-            VALIDATION[Input Validation]
-            NORMALIZATION[Content Normalization]
-            PROCESSING[Content Processing]
-            ENRICHMENT[Data Enrichment]
-            ANALYSIS[AI Analysis]
+            VALIDATION["Input Validation"]
+            NORMALIZATION["Content Normalization"]
+            PROCESSING["Content Processing"]
+            ENRICHMENT["Data Enrichment"]
+            ANALYSIS["AI Analysis"]
         end
     end
-    
+
     subgraph "Configuration"
-        CHAN_CONFIG[Channel Config<br/>• API credentials<br/>• Rate limits<br/>• Feature flags]
-        
-        PROC_CONFIG[Processor Config<br/>• Language models<br/>• Safety thresholds<br/>• Processing rules]
+        CHAN_CONFIG["Channel Config<br>– API credentials<br>– Rate limits<br>– Feature flags"]
+
+        PROC_CONFIG["Processor Config<br>– Language models<br>– Safety thresholds<br>– Processing rules"]
     end
 
     %% Factory relationships
     CHAN_FACTORY --> BASE_CHANNEL
     PROC_FACTORY --> BASE_PROCESSOR
-    
+
     %% Channel inheritance
     BASE_CHANNEL --> WEB_CHANNEL
     BASE_CHANNEL --> WHATSAPP_CHANNEL
     BASE_CHANNEL --> SLACK_CHANNEL
     BASE_CHANNEL --> TEAMS_CHANNEL
     BASE_CHANNEL --> MESSENGER_CHANNEL
-    
+
     %% Processor inheritance
     BASE_PROCESSOR --> TEXT_PROCESSOR
     BASE_PROCESSOR --> MEDIA_PROCESSOR
     BASE_PROCESSOR --> LOCATION_PROCESSOR
-    
+
     %% Pipeline flow
     PIPELINE --> VALIDATION
     VALIDATION --> NORMALIZATION
     NORMALIZATION --> PROCESSING
     PROCESSING --> ENRICHMENT
     ENRICHMENT --> ANALYSIS
-    
+
     %% Normalizer usage
     NORMALIZATION --> MSG_NORMALIZER
     NORMALIZATION --> CONTENT_NORMALIZER
     NORMALIZATION --> METADATA_NORMALIZER
-    
+
     %% Processor usage in pipeline
     PROCESSING --> TEXT_PROCESSOR
     PROCESSING --> MEDIA_PROCESSOR
     PROCESSING --> LOCATION_PROCESSOR
-    
+
     %% Configuration
     CHAN_FACTORY --> CHAN_CONFIG
     PROC_FACTORY --> PROC_CONFIG
-    
+
     %% Channel to processor flow
     WEB_CHANNEL -.-> PIPELINE
     WHATSAPP_CHANNEL -.-> PIPELINE
@@ -414,146 +407,138 @@ graph TB
     TEAMS_CHANNEL -.-> PIPELINE
     MESSENGER_CHANNEL -.-> PIPELINE
 
+    %% Styles
     style BASE_CHANNEL fill:#e1f5fe
     style BASE_PROCESSOR fill:#f3e5f5
     style PIPELINE fill:#e8f5e8
     style CHAN_FACTORY fill:#fff3e0
     style PROC_FACTORY fill:#fff3e0
+
 ```
 
 ## 5. Event & Integration Architecture
 
 ```mermaid
 graph TB
+    %% === Event Sources ===
     subgraph "Event Sources"
-        MSG_SERVICE[Message Service]
-        CONV_SERVICE[Conversation Service]
-        SESS_SERVICE[Session Service]
-        WEBHOOK_PROC[Webhook Processors]
-        HEALTH_CHECK[Health Checks]
-    end
-    
-    subgraph "Event Management"
-        EVENT_MANAGER[Event Manager<br/>• register_handler()<br/>• publish()<br/>• process_event()]
-        
-        EVENT_ROUTER[Event Router<br/>• Route by type<br/>• Load balancing<br/>• Dead letter queue]
-    end
-    
-    subgraph "Event Types"
-        subgraph "Domain Events"
-            MSG_RECEIVED[Message Received Event]
-            MSG_SENT[Message Sent Event]
-            MSG_DELIVERED[Message Delivered Event]
-            CONV_STARTED[Conversation Started Event]
-            CONV_ENDED[Conversation Ended Event]
-            CONV_UPDATED[Conversation Updated Event]
-        end
-        
-        subgraph "System Events"
-            HEALTH_EVENT[Service Health Event]
-            ERROR_EVENT[Error Occurred Event]
-            PERFORMANCE_EVENT[Performance Event]
-        end
-        
-        subgraph "Integration Events"
-            WEBHOOK_EVENT[Webhook Received Event]
-            API_CALL_EVENT[External API Call Event]
-            AUTH_EVENT[Authentication Event]
-        end
-    end
-    
-    subgraph "Event Infrastructure"
-        KAFKA_PRODUCER[Kafka Producer<br/>• Reliable publishing<br/>• Batching<br/>• Partitioning]
-        
-        KAFKA_CONSUMER[Kafka Consumer<br/>• Group processing<br/>• Offset management<br/>• Error handling]
-        
-        KAFKA_TOPICS[Kafka Topics<br/>• chat.message.*<br/>• chat.conversation.*<br/>• system.*<br/>• integration.*]
-    end
-    
-    subgraph "Event Handlers"
-        ANALYTICS_HANDLER[Analytics Handler<br/>• Metrics aggregation<br/>• KPI calculation<br/>• Real-time dashboards]
-        
-        NOTIFICATION_HANDLER[Notification Handler<br/>• Email alerts<br/>• SMS notifications<br/>• Slack alerts]
-        
-        AUDIT_HANDLER[Audit Handler<br/>• Compliance logging<br/>• Security monitoring<br/>• Data retention]
-        
-        WEBHOOK_HANDLER[Webhook Handler<br/>• External notifications<br/>• Third-party integration<br/>• Custom triggers]
-    end
-    
-    subgraph "External Integrations"
-        direction TB
-        
-        subgraph "gRPC Clients"
-            MCP_CLIENT[MCP Engine Client<br/>• Message processing<br/>• Context updates<br/>• Health checks]
-            
-            SECURITY_CLIENT[Security Hub Client<br/>• Token validation<br/>• Permission checks<br/>• User management]
-        end
-        
-        subgraph "Webhook Systems"
-            WEBHOOK_SENDER[Webhook Sender<br/>• Delivery queue<br/>• Retry logic<br/>• Signature generation]
-            
-            WEBHOOK_RECEIVER[Webhook Receiver<br/>• Signature validation<br/>• Rate limiting<br/>• Processing queue]
-        end
-        
-        subgraph "External Services"
-            ANALYTICS_ENGINE[Analytics Engine]
-            NOTIFICATION_SERVICE[Notification Service]
-            COMPLIANCE_SERVICE[Compliance Service]
-            THIRD_PARTY_APIS[Third-party APIs]
-        end
-    end
-    
-    subgraph "Dead Letter Queue"
-        DLQ[Dead Letter Queue<br/>• Failed events<br/>• Retry mechanism<br/>• Manual intervention]
+        MSG_SERVICE["Message Service"]
+        CONV_SERVICE["Conversation Service"]
+        SESS_SERVICE["Session Service"]
+        WEBHOOK_PROC["Webhook Processors"]
+        HEALTH_CHECK["Health Checks"]
     end
 
-    %% Event flow
+    %% === Event Management ===
+    subgraph "Event Management"
+        EVENT_MANAGER["Event Manager<br>• register_handler()<br>• publish()<br>• process_event()"]
+        EVENT_ROUTER["Event Router<br>• Route by type<br>• Load balancing<br>• Dead letter queue"]
+    end
+
+    %% === Event Types ===
+    subgraph "Event Types"
+        subgraph "Domain Events"
+            MSG_RECEIVED["Message Received Event"]
+            MSG_SENT["Message Sent Event"]
+            MSG_DELIVERED["Message Delivered Event"]
+            CONV_STARTED["Conversation Started Event"]
+            CONV_ENDED["Conversation Ended Event"]
+            CONV_UPDATED["Conversation Updated Event"]
+        end
+
+        subgraph "System Events"
+            HEALTH_EVENT["Service Health Event"]
+            ERROR_EVENT["Error Occurred Event"]
+            PERFORMANCE_EVENT["Performance Event"]
+        end
+
+        subgraph "Integration Events"
+            WEBHOOK_EVENT["Webhook Received Event"]
+            API_CALL_EVENT["External API Call Event"]
+            AUTH_EVENT["Authentication Event"]
+        end
+    end
+
+    %% === Event Infrastructure ===
+    subgraph "Event Infrastructure"
+        KAFKA_PRODUCER["Kafka Producer<br>• Reliable publishing<br>• Batching<br>• Partitioning"]
+        KAFKA_CONSUMER["Kafka Consumer<br>• Group processing<br>• Offset management<br>• Error handling"]
+        KAFKA_TOPICS["Kafka Topics<br>• chat.message.*<br>• chat.conversation.*<br>• system.*<br>• integration.*"]
+    end
+
+    %% === Event Handlers ===
+    subgraph "Event Handlers"
+        ANALYTICS_HANDLER["Analytics Handler<br>• Metrics aggregation<br>• KPI calculation<br>• Real-time dashboards"]
+        NOTIFICATION_HANDLER["Notification Handler<br>• Email alerts<br>• SMS notifications<br>• Slack alerts"]
+        AUDIT_HANDLER["Audit Handler<br>• Compliance logging<br>• Security monitoring<br>• Data retention"]
+        WEBHOOK_HANDLER["Webhook Handler<br>• External notifications<br>• Third-party integration<br>• Custom triggers"]
+    end
+
+    %% === External Integrations ===
+    subgraph "External Integrations"
+        direction TB
+
+        subgraph "gRPC Clients"
+            MCP_CLIENT["MCP Engine Client<br>• Message processing<br>• Context updates<br>• Health checks"]
+            SECURITY_CLIENT["Security Hub Client<br>• Token validation<br>• Permission checks<br>• User management"]
+        end
+
+        subgraph "Webhook Systems"
+            WEBHOOK_SENDER["Webhook Sender<br>• Delivery queue<br>• Retry logic<br>• Signature generation"]
+            WEBHOOK_RECEIVER["Webhook Receiver<br>• Signature validation<br>• Rate limiting<br>• Processing queue"]
+        end
+
+        subgraph "External Services"
+            ANALYTICS_ENGINE["Analytics Engine"]
+            NOTIFICATION_SERVICE["Notification Service"]
+            COMPLIANCE_SERVICE["Compliance Service"]
+            THIRD_PARTY_APIS["Third-party APIs"]
+        end
+    end
+
+    %% === Dead Letter Queue ===
+    subgraph "Dead Letter Queue"
+        DLQ["Dead Letter Queue<br>• Failed events<br>• Retry mechanism<br>• Manual intervention"]
+    end
+
+    %% === Event Flow ===
     MSG_SERVICE --> EVENT_MANAGER
     CONV_SERVICE --> EVENT_MANAGER
     SESS_SERVICE --> EVENT_MANAGER
     WEBHOOK_PROC --> EVENT_MANAGER
-    
-    %% Event publishing
+
     EVENT_MANAGER --> KAFKA_PRODUCER
     KAFKA_PRODUCER --> KAFKA_TOPICS
-    
-    %% Event consumption
     KAFKA_TOPICS --> KAFKA_CONSUMER
     KAFKA_CONSUMER --> EVENT_ROUTER
-    
-    %% Event routing
+
     EVENT_ROUTER --> ANALYTICS_HANDLER
     EVENT_ROUTER --> NOTIFICATION_HANDLER
     EVENT_ROUTER --> AUDIT_HANDLER
     EVENT_ROUTER --> WEBHOOK_HANDLER
-    
-    %% Failed events
     EVENT_ROUTER --> DLQ
     DLQ -.-> EVENT_ROUTER
-    
-    %% Handler to external services
+
     ANALYTICS_HANDLER --> ANALYTICS_ENGINE
     NOTIFICATION_HANDLER --> NOTIFICATION_SERVICE
     AUDIT_HANDLER --> COMPLIANCE_SERVICE
     WEBHOOK_HANDLER --> WEBHOOK_SENDER
-    
-    %% Webhook delivery
+
     WEBHOOK_SENDER --> THIRD_PARTY_APIS
     THIRD_PARTY_APIS --> WEBHOOK_RECEIVER
-    
-    %% gRPC integrations
+
     MSG_SERVICE -.->|gRPC| MCP_CLIENT
     EVENT_MANAGER -.->|gRPC| SECURITY_CLIENT
-    
-    %% External service responses
     MCP_CLIENT -.-> MSG_SERVICE
     SECURITY_CLIENT -.-> EVENT_MANAGER
 
+    %% === Styles ===
     style EVENT_MANAGER fill:#e3f2fd
     style KAFKA_TOPICS fill:#fff8e1
     style ANALYTICS_HANDLER fill:#e8f5e8
     style MCP_CLIENT fill:#ffebee
     style DLQ fill:#fce4ec
+
 ```
 
 ## Architecture Summary

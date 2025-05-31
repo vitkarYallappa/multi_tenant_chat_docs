@@ -1,0 +1,28 @@
+You are a senior architect helping me build a complex enterprise chat platform. I need a full implementation plan based on the Chat Service architecture described in the provided documentation. Please generate a structured 4-month roadmap, divided into 10 phases and 18 clear steps. Each phase should include:
+1. What will be implemented (services, components, modules)
+2. Which folders and files will be created or updated
+3. Documentation of each file (what it does and how it's used)
+4. All methods inside each file with:
+   - Method name
+   - Purpose
+   - Parameters (name, type, description)
+   - Return type
+5. Cross-service relationships, where applicable
+6. Technologies or protocols used (e.g., FastAPI, Redis, Kafka, gRPC)
+7. Key error handling and performance considerations
+Base the implementation plan on the following Chat Service structure:
+- API: Endpoints and middlewares
+- Core: Channels, processors, normalizers
+- Services: Business logic
+- Repositories: Data access
+- Events: Kafka publishing/subscription
+- Models: MongoDB, Redis, Pydantic
+- Clients: gRPC for MCP and Security Hub
+- Utilities: Formatters, metrics, logging, validation
+- Exceptions: Custom error handlers
+- Config: Constants, env setup
+- Tests: Unit, integration, E2E
+- DevOps: Docker, Kubernetes, CI/CD
+Ensure that each phase is well-balanced and builds upon previous ones. The roadmap must be executable by a dev team, with realistic pacing for a 4-month timeline. Use markdown for formatting.
+
+create 10 phase seperate markdown files so in future developement is good for us in cloud code editor
