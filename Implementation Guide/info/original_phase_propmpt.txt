@@ -15,7 +15,9 @@ Base the implementation plan on the following Security hub structure:
 - Core: Channels, processors, normalizers
 - Services: Business logic
 - Repositories: Data access
+- Events: Kafka publishing/subscription
 - Models: MongoDB, Redis, Pydantic
+- Clients: gRPC for MCP and Security Hub
 - Utilities: Formatters, metrics, logging, validation
 - Exceptions: Custom error handlers
 - Config: Constants, env setup
