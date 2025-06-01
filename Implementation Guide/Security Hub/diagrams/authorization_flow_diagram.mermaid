@@ -1,0 +1,110 @@
+sequenceDiagram
+    participant Client
+    participant Gateway as API Gateway
+    participant Auth as Authentication Service
+    participant Authz as Authorization Service
+    participant RBAC as RBAC Engine
+    participant Policy as Policy Engine
+    participant Cache as Redis Cache
+    participant DB as PostgreSQL
+    participant Audit as Audit Logger
+
+    Note over Client,Audit: Authorization & Permission Check Flow
+
+    %% API Request with Authorization
+    Client->>Gateway: API Request + JWT Token<br/>GET /api/v2/users/{user_id}
+    Gateway->>Auth: Validate JWT token
+    
+    alt Invalid Token
+        Auth-->>Gateway: 401 Unauthorized
+        Gateway-->>Client: Token invalid/expired
+    else Valid Token
+        Auth->>Auth: Extract user context from token
+        Auth-->>Gateway: User context validated
+        
+        %% Authorization Check
+        Gateway->>Authz: Check permission<br/>{user_context, resource: "users", action: "read"}
+        
+        %% Cache Check First
+        Authz->>Cache: Check permission cache<br/>Key: user_id:resource:action
+        
+        alt Cache Hit
+            Cache-->>Authz: Cached permission result
+        else Cache Miss
+            %% Load User Permissions
+            Authz->>RBAC: Get user effective permissions
+            RBAC->>DB: Load user roles + permissions
+            DB-->>RBAC: User roles and explicit permissions
+            
+            RBAC->>RBAC: Resolve role hierarchy
+            RBAC->>RBAC: Aggregate effective permissions
+            RBAC-->>Authz: Effective permission set
+            
+            %% Policy Evaluation
+            Authz->>Policy: Evaluate policies<br/>{user_context, resource_attributes}
+            
+            Policy->>Policy: Check attribute-based conditions
+            Policy->>Policy: Evaluate time constraints
+            Policy->>Policy: Check resource ownership
+            Policy->>Policy: Validate tenant isolation
+            
+            Policy-->>Authz: Policy evaluation result
+            
+            %% Final Permission Decision
+            Authz->>Authz: Combine RBAC + Policy results
+            Authz->>Cache: Cache permission decision (TTL: 5min)
+        end
+        
+        alt Permission Granted
+            Authz->>Audit: Log authorized access
+            Authz-->>Gateway: 200 Permission granted
+            Gateway->>Gateway: Apply resource filters (if needed)
+            Gateway-->>Client: API response with authorized data
+        else Permission Denied
+            Authz->>Audit: Log permission denial
+            Authz-->>Gateway: 403 Forbidden + reason
+            Gateway-->>Client: Access denied
+        end
+    end
+
+    Note over Client,Audit: Batch Permission Check (for UI rendering)
+
+    %% Batch Permission Check
+    Client->>Gateway: POST /api/v2/permissions/batch-check<br/>[{resource, action}, ...]
+    Gateway->>Auth: Validate token
+    Auth-->>Gateway: User context
+    
+    Gateway->>Authz: Batch permission check
+    
+    loop For each permission request
+        Authz->>Cache: Check individual permission cache
+        alt Cache Miss
+            Authz->>RBAC: Evaluate permission
+            Authz->>Policy: Evaluate policies
+            Authz->>Cache: Cache result
+        end
+    end
+    
+    Authz->>Authz: Aggregate batch results
+    Authz->>Audit: Log batch permission check
+    Authz-->>Gateway: Batch permission results
+    Gateway-->>Client: Permission matrix for UI
+
+    Note over Client,Audit: Administrative Permission Changes
+
+    %% Role Assignment
+    Client->>Gateway: POST /api/v2/roles/assign<br/>{user_id, role_id, context}
+    Gateway->>Auth: Validate admin token
+    Gateway->>Authz: Check role assignment permission
+    
+    alt Admin Permission Granted
+        Authz->>DB: Update user role assignment
+        Authz->>Cache: Invalidate user permission cache
+        Authz->>Audit: Log role assignment
+        Authz-->>Gateway: Role assigned successfully
+        Gateway-->>Client: Success response
+    else Insufficient Permissions
+        Authz->>Audit: Log unauthorized role assignment attempt
+        Authz-->>Gateway: 403 Forbidden
+        Gateway-->>Client: Permission denied
+    end

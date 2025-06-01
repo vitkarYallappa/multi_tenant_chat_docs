@@ -1,0 +1,90 @@
+sequenceDiagram
+    participant Client
+    participant Gateway as API Gateway
+    participant Auth as Authentication Service
+    participant MFA as MFA Manager
+    participant Session as Session Manager
+    participant DB as PostgreSQL
+    participant Cache as Redis
+    participant Audit as Audit Logger
+
+    Note over Client,Audit: User Authentication Flow with MFA
+
+    %% Initial Login Request
+    Client->>Gateway: POST /auth/login<br/>{email, password, device_info}
+    Gateway->>Auth: Forward login request
+    
+    %% Credential Validation
+    Auth->>DB: Validate user credentials
+    DB-->>Auth: User data + security settings
+    
+    alt Invalid Credentials
+        Auth->>Audit: Log failed attempt
+        Auth-->>Gateway: 401 Unauthorized
+        Gateway-->>Client: Authentication failed
+    else Valid Credentials
+        Auth->>Auth: Check account status/lockout
+        
+        alt Account Locked/Suspended
+            Auth->>Audit: Log blocked attempt
+            Auth-->>Gateway: 423 Locked
+            Gateway-->>Client: Account locked
+        else Account Active
+            %% Check MFA Requirement
+            Auth->>Auth: Evaluate MFA requirement
+            
+            alt MFA Required
+                Auth->>MFA: Generate MFA challenge
+                MFA->>Cache: Store challenge (TTL: 5min)
+                MFA-->>Auth: Challenge data
+                Auth-->>Gateway: 202 MFA Required + challenge_id
+                Gateway-->>Client: MFA challenge required
+                
+                %% MFA Verification
+                Client->>Gateway: POST /auth/mfa/verify<br/>{challenge_id, code}
+                Gateway->>MFA: Verify MFA code
+                MFA->>Cache: Validate challenge + code
+                
+                alt Invalid MFA Code
+                    MFA->>Audit: Log MFA failure
+                    MFA-->>Gateway: 401 Invalid code
+                    Gateway-->>Client: MFA verification failed
+                else Valid MFA Code
+                    MFA->>Cache: Mark MFA verified
+                    MFA-->>Auth: MFA verification success
+                end
+            end
+            
+            %% Session and Token Creation
+            Auth->>Session: Create user session
+            Session->>Cache: Store session data (TTL: 1hr)
+            Session-->>Auth: Session ID
+            
+            Auth->>Auth: Generate JWT tokens
+            Auth->>Cache: Store token metadata
+            Auth->>Audit: Log successful authentication
+            
+            Auth-->>Gateway: 200 OK + tokens + user_info
+            Gateway-->>Client: Authentication successful
+        end
+    end
+
+    Note over Client,Audit: Token Refresh Flow
+    
+    %% Token Refresh
+    Client->>Gateway: POST /auth/refresh<br/>{refresh_token}
+    Gateway->>Auth: Validate refresh token
+    Auth->>Cache: Check token blacklist
+    Auth->>Session: Validate session
+    
+    alt Valid Refresh Token
+        Auth->>Auth: Generate new access token
+        Auth->>Cache: Update token metadata
+        Auth->>Audit: Log token refresh
+        Auth-->>Gateway: 200 OK + new_tokens
+        Gateway-->>Client: New tokens issued
+    else Invalid/Expired Token
+        Auth->>Audit: Log invalid refresh attempt
+        Auth-->>Gateway: 401 Unauthorized
+        Gateway-->>Client: Re-authentication required
+    end

@@ -1,0 +1,91 @@
+sequenceDiagram
+    participant App as Security Hub Services
+    participant Metrics as Metrics Collector
+    participant Prom as Prometheus
+    participant Alert as AlertManager
+    participant Graf as Grafana
+    participant SIEM as SIEM System
+    participant Oncall as On-Call Engineer
+    participant Slack as Slack/Teams
+    participant PD as PagerDuty
+
+    Note over App,PD: Real-time Monitoring & Alerting Flow
+
+    %% Metrics Collection
+    loop Every 15 seconds
+        App->>Metrics: Emit metrics<br/>• Response times<br/>• Error rates<br/>• Authentication events<br/>• Security violations
+        Metrics->>Prom: Push metrics<br/>• /metrics endpoint<br/>• Custom metrics<br/>• Business metrics
+    end
+
+    %% Security Event Processing
+    App->>SIEM: Security events<br/>• Failed auth attempts<br/>• Permission violations<br/>• Encryption failures<br/>• Compliance violations
+    
+    SIEM->>SIEM: Correlate events<br/>• Pattern detection<br/>• Threat analysis<br/>• Risk scoring
+
+    %% Alert Evaluation
+    loop Every 1 minute
+        Prom->>Prom: Evaluate alert rules<br/>• SLA violations<br/>• Error thresholds<br/>• Performance degradation<br/>• Security incidents
+        
+        alt Critical Alert Triggered
+            Prom->>Alert: Fire critical alert<br/>• Service down<br/>• High error rate<br/>• Security breach
+            Alert->>PD: Create incident<br/>• Severity: Critical<br/>• Auto-escalate
+            PD->>Oncall: Page on-call engineer<br/>• Phone call + SMS<br/>• Escalate if no response
+            Alert->>Slack: Post to #alerts channel<br/>• Alert details<br/>• Runbook links
+            
+        else Warning Alert Triggered
+            Prom->>Alert: Fire warning alert<br/>• Performance degradation<br/>• Resource usage high<br/>• Non-critical errors
+            Alert->>Slack: Post to #monitoring channel<br/>• Alert summary<br/>• Investigation notes
+            
+        else Info Alert Triggered
+            Prom->>Alert: Fire info alert<br/>• Deployment completed<br/>• Maintenance scheduled<br/>• Usage milestones
+            Alert->>Slack: Post to #general channel<br/>• Informational message
+        end
+    end
+
+    %% SIEM Alert Processing
+    alt Security Incident Detected
+        SIEM->>SIEM: Automated response<br/>• Block suspicious IPs<br/>• Lock compromised accounts<br/>• Preserve evidence
+        SIEM->>Alert: Security alert<br/>• Incident type<br/>• Affected resources<br/>• Recommended actions
+        Alert->>PD: Create security incident<br/>• Severity based on impact<br/>• Security team escalation
+        Alert->>Slack: Post to #security channel<br/>• Incident details<br/>• Response procedures
+        PD->>Oncall: Page security engineer<br/>• Immediate response required
+    end
+
+    %% Dashboard Updates
+    loop Every 30 seconds
+        Prom->>Graf: Query metrics<br/>• Real-time data<br/>• Aggregated views<br/>• Custom queries
+        Graf->>Graf: Update dashboards<br/>• Executive dashboard<br/>• Operational dashboard<br/>• Security dashboard
+    end
+
+    %% Alert Acknowledgment & Resolution
+    Oncall->>PD: Acknowledge alert<br/>• Investigation started<br/>• ETA for resolution
+    PD->>Alert: Update alert status<br/>• Acknowledged<br/>• In progress
+    Alert->>Slack: Update thread<br/>• Status update<br/>• Investigation notes
+
+    %% Resolution & Post-incident
+    Oncall->>App: Apply fix<br/>• Deploy hotfix<br/>• Scale resources<br/>• Update configuration
+    
+    App->>Metrics: Updated metrics<br/>• Improved performance<br/>• Error rate reduced<br/>• Service restored
+    
+    Metrics->>Prom: New metric values<br/>• Health restored<br/>• SLA compliance
+    
+    Prom->>Alert: Alert condition resolved<br/>• Metrics within thresholds<br/>• Service healthy
+    
+    Alert->>Slack: Resolution notification<br/>• Incident resolved<br/>• Duration<br/>• Impact summary
+    
+    Alert->>PD: Close incident<br/>• Root cause<br/>• Resolution steps<br/>• Follow-up actions
+    
+    %% Post-incident Review
+    Note over Oncall,PD: Post-Incident Review Process
+    
+    Oncall->>Oncall: Create post-incident report<br/>• Timeline<br/>• Root cause<br/>• Action items
+    
+    Oncall->>Slack: Share learnings<br/>• What went well<br/>• What to improve<br/>• Prevention measures
+
+    %% Continuous Improvement
+    Note over App,PD: Continuous Monitoring Improvement
+    
+    loop Weekly
+        Metrics->>Metrics: Analyze alert patterns<br/>• False positive rate<br/>• Response times<br/>• Alert effectiveness
+        Metrics->>Prom: Update alert rules<br/>• Tune thresholds<br/>• Add new alerts<br/>• Remove noise
+    end

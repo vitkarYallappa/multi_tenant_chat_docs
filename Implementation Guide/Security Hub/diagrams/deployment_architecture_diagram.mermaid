@@ -1,0 +1,152 @@
+graph TB
+    subgraph "External Layer"
+        USERS[Users & Applications]
+        DNS[DNS & CDN<br/>Route 53 / CloudFlare]
+        LB[Cloud Load Balancer<br/>ALB / GLB / Azure LB]
+    end
+
+    subgraph "Kubernetes Cluster - Production"
+        subgraph "Ingress Layer"
+            INGRESS[NGINX Ingress Controller<br/>• SSL Termination<br/>• Rate Limiting<br/>• WAF Rules]
+            CERT[Cert Manager<br/>• TLS Certificates<br/>• Auto Renewal]
+        end
+
+        subgraph "Security Hub Namespace"
+            subgraph "Authentication Tier"
+                AUTH_POD[Authentication Service<br/>Replicas: 3-10<br/>CPU: 500m-2000m<br/>Memory: 1Gi-4Gi]
+                MFA_POD[MFA Service<br/>Replicas: 2-5<br/>CPU: 200m-1000m<br/>Memory: 512Mi-2Gi]
+            end
+
+            subgraph "Authorization Tier"
+                AUTHZ_POD[Authorization Service<br/>Replicas: 3-15<br/>CPU: 500m-2000m<br/>Memory: 1Gi-4Gi]
+                RBAC_POD[RBAC Engine<br/>Replicas: 2-8<br/>CPU: 300m-1500m<br/>Memory: 1Gi-3Gi]
+            end
+
+            subgraph "Security Services"
+                ENCRYPT_POD[Encryption Service<br/>Replicas: 2-6<br/>CPU: 500m-2000m<br/>Memory: 1Gi-3Gi]
+                COMPLIANCE_POD[Compliance Service<br/>Replicas: 2-4<br/>CPU: 300m-1000m<br/>Memory: 512Mi-2Gi]
+                MONITOR_POD[Monitoring Service<br/>Replicas: 2-5<br/>CPU: 300m-1500m<br/>Memory: 1Gi-2Gi]
+            end
+        end
+
+        subgraph "Data Services Namespace"
+            REDIS_CLUSTER[Redis Cluster<br/>Master: 3 nodes<br/>Replica: 3 nodes<br/>Memory: 8Gi per node]
+            POSTGRES_HA[PostgreSQL HA<br/>Primary + 2 Replicas<br/>CPU: 2000m-4000m<br/>Memory: 8Gi-16Gi]
+        end
+
+        subgraph "Monitoring Namespace"
+            PROMETHEUS[Prometheus<br/>• Metrics Collection<br/>• Alerting Rules<br/>• Service Discovery]
+            GRAFANA[Grafana<br/>• Dashboards<br/>• Visualization<br/>• User Management]
+            JAEGER[Jaeger<br/>• Distributed Tracing<br/>• Performance Analysis<br/>• Request Flow]
+        end
+
+        subgraph "System Services"
+            HPA[Horizontal Pod Autoscaler<br/>• CPU/Memory Based<br/>• Custom Metrics<br/>• Predictive Scaling]
+            RBAC_K8S[Kubernetes RBAC<br/>• Service Accounts<br/>• Role Bindings<br/>• Pod Security]
+        end
+    end
+
+    subgraph "Managed Cloud Services"
+        subgraph "Database Layer"
+            RDS[Amazon RDS PostgreSQL<br/>• Multi-AZ Deployment<br/>• Automated Backups<br/>• Read Replicas]
+            ELASTICACHE[ElastiCache Redis<br/>• Cluster Mode<br/>• Auto Failover<br/>• Encryption at Rest]
+            TSDB_MANAGED[Managed TimescaleDB<br/>• Time-series Data<br/>• Compression<br/>• Retention Policies]
+        end
+
+        subgraph "Security Services"
+            KMS[AWS KMS / Azure Key Vault<br/>• Key Management<br/>• Hardware Security<br/>• Audit Logging]
+            SECRETS[Secrets Manager<br/>• Secret Rotation<br/>• Cross-service Access<br/>• Audit Trail]
+            IAM[Identity & Access Management<br/>• Role-based Access<br/>• Service Authentication<br/>• Policy Management]
+        end
+
+        subgraph "Monitoring & Logging"
+            CLOUDWATCH[CloudWatch / Azure Monitor<br/>• Infrastructure Metrics<br/>• Log Aggregation<br/>• Alerting]
+            SIEM_CLOUD[AWS Security Hub / Sentinel<br/>• Security Events<br/>• Compliance Monitoring<br/>• Threat Detection]
+        end
+    end
+
+    subgraph "External Integrations"
+        SSO_PROVIDERS[SSO Providers<br/>• Active Directory<br/>• Okta<br/>• Auth0]
+        VAULT_EXT[HashiCorp Vault<br/>• External Secrets<br/>• Dynamic Credentials<br/>• PKI Services]
+        SIEM_EXT[External SIEM<br/>• Splunk<br/>• QRadar<br/>• Elastic SIEM]
+    end
+
+    subgraph "CI/CD Pipeline"
+        GITHUB[GitHub Actions<br/>• Code Repository<br/>• CI/CD Workflows<br/>• Security Scanning]
+        REGISTRY[Container Registry<br/>• Image Storage<br/>• Vulnerability Scanning<br/>• Image Signing]
+        TERRAFORM[Terraform Cloud<br/>• Infrastructure as Code<br/>• State Management<br/>• Policy Enforcement]
+    end
+
+    %% User Flow
+    USERS --> DNS
+    DNS --> LB
+    LB --> INGRESS
+
+    %% Ingress Flow
+    INGRESS --> AUTH_POD
+    INGRESS --> AUTHZ_POD
+    INGRESS --> ENCRYPT_POD
+    CERT --> INGRESS
+
+    %% Service Dependencies
+    AUTH_POD --> REDIS_CLUSTER
+    AUTH_POD --> POSTGRES_HA
+    AUTHZ_POD --> REDIS_CLUSTER
+    AUTHZ_POD --> POSTGRES_HA
+    MFA_POD --> REDIS_CLUSTER
+    RBAC_POD --> POSTGRES_HA
+    ENCRYPT_POD --> KMS
+    COMPLIANCE_POD --> POSTGRES_HA
+    MONITOR_POD --> PROMETHEUS
+
+    %% Managed Services Integration
+    POSTGRES_HA -.->|Backup & HA| RDS
+    REDIS_CLUSTER -.->|Managed Alternative| ELASTICACHE
+    MONITOR_POD --> TSDB_MANAGED
+
+    %% Security Integration
+    AUTH_POD --> IAM
+    ENCRYPT_POD --> SECRETS
+    COMPLIANCE_POD --> SIEM_CLOUD
+    MONITOR_POD --> CLOUDWATCH
+
+    %% Monitoring Flow
+    AUTH_POD --> PROMETHEUS
+    AUTHZ_POD --> PROMETHEUS
+    PROMETHEUS --> GRAFANA
+    AUTH_POD --> JAEGER
+    AUTHZ_POD --> JAEGER
+
+    %% External Integrations
+    AUTH_POD --> SSO_PROVIDERS
+    ENCRYPT_POD --> VAULT_EXT
+    MONITOR_POD --> SIEM_EXT
+
+    %% CI/CD Flow
+    GITHUB --> REGISTRY
+    REGISTRY --> AUTH_POD
+    REGISTRY --> AUTHZ_POD
+    TERRAFORM --> POSTGRES_HA
+    TERRAFORM --> REDIS_CLUSTER
+
+    %% Auto-scaling
+    HPA --> AUTH_POD
+    HPA --> AUTHZ_POD
+    HPA --> PROMETHEUS
+
+    %% Security
+    RBAC_K8S --> AUTH_POD
+    RBAC_K8S --> AUTHZ_POD
+
+    %% Styling
+    classDef userLayer fill:#e1f5fe,stroke:#01579b,stroke-width:2px
+    classDef k8sLayer fill:#f3e5f5,stroke:#4a148c,stroke-width:2px
+    classDef cloudLayer fill:#e8f5e8,stroke:#1b5e20,stroke-width:2px
+    classDef extLayer fill:#fff3e0,stroke:#e65100,stroke-width:2px
+    classDef cicdLayer fill:#fce4ec,stroke:#c2185b,stroke-width:2px
+
+    class USERS,DNS,LB userLayer
+    class AUTH_POD,AUTHZ_POD,MFA_POD,RBAC_POD,ENCRYPT_POD,COMPLIANCE_POD,MONITOR_POD,REDIS_CLUSTER,POSTGRES_HA,PROMETHEUS,GRAFANA,JAEGER,INGRESS k8sLayer
+    class RDS,ELASTICACHE,TSDB_MANAGED,KMS,SECRETS,IAM,CLOUDWATCH,SIEM_CLOUD cloudLayer
+    class SSO_PROVIDERS,VAULT_EXT,SIEM_EXT extLayer
+    class GITHUB,REGISTRY,TERRAFORM cicdLayer

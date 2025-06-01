@@ -1,0 +1,102 @@
+graph TB
+    subgraph "External Clients"
+        WEB[Web Application]
+        API[API Clients]
+        MOB[Mobile Apps]
+        EXT[External Services]
+    end
+
+    subgraph "API Gateway & Load Balancer"
+        LB[Load Balancer]
+        WAF[Web Application Firewall]
+        GATE[API Gateway]
+    end
+
+    subgraph "Security Hub Core Services"
+        AUTH[Authentication Service<br/>- JWT Management<br/>- Session Management<br/>- MFA Processing]
+        AUTHZ[Authorization Service<br/>- RBAC Engine<br/>- Permission Evaluation<br/>- Policy Engine]
+        APIKEY[API Key Service<br/>- Key Management<br/>- Usage Tracking<br/>- Scope Management]
+        ENCRYPT[Encryption Service<br/>- Field Encryption<br/>- Key Management<br/>- PII Detection]
+        COMP[Compliance Service<br/>- GDPR Manager<br/>- HIPAA Manager<br/>- Audit Logger]
+        MON[Monitoring Service<br/>- Metrics Collection<br/>- Security Analytics<br/>- Alerting Engine]
+    end
+
+    subgraph "Data Layer"
+        POSTGRES[(PostgreSQL<br/>Users, Tenants<br/>Permissions, Configs)]
+        MONGO[(MongoDB<br/>Conversations<br/>Messages, Logs)]
+        REDIS[(Redis Cluster<br/>Sessions, Cache<br/>Rate Limits)]
+        TSDB[(TimescaleDB<br/>Metrics, Analytics<br/>Time Series)]
+    end
+
+    subgraph "External Integrations"
+        SSO[SSO Providers<br/>OAuth, SAML, LDAP]
+        VAULT[HashiCorp Vault<br/>Secret Management]
+        SIEM[SIEM Systems<br/>Security Events]
+        HSM[Hardware Security Module<br/>Key Protection]
+    end
+
+    subgraph "Infrastructure"
+        K8S[Kubernetes Cluster]
+        PROM[Prometheus<br/>Monitoring]
+        GRAF[Grafana<br/>Dashboards]
+        JAEGER[Jaeger<br/>Tracing]
+    end
+
+    %% Client connections
+    WEB --> LB
+    API --> LB
+    MOB --> LB
+    EXT --> LB
+
+    %% Gateway routing
+    LB --> WAF
+    WAF --> GATE
+    
+    %% Service connections
+    GATE --> AUTH
+    GATE --> AUTHZ
+    GATE --> APIKEY
+    GATE --> ENCRYPT
+    GATE --> COMP
+    GATE --> MON
+
+    %% Inter-service communication
+    AUTH -.->|gRPC| AUTHZ
+    AUTHZ -.->|gRPC| AUTH
+    APIKEY -.->|gRPC| AUTH
+    ENCRYPT -.->|gRPC| AUTHZ
+    COMP -.->|Events| MON
+
+    %% Data connections
+    AUTH --> POSTGRES
+    AUTH --> REDIS
+    AUTHZ --> POSTGRES
+    AUTHZ --> REDIS
+    APIKEY --> POSTGRES
+    APIKEY --> REDIS
+    ENCRYPT --> POSTGRES
+    COMP --> POSTGRES
+    COMP --> MONGO
+    MON --> TSDB
+    MON --> REDIS
+
+    %% External integrations
+    AUTH --> SSO
+    ENCRYPT --> VAULT
+    ENCRYPT --> HSM
+    MON --> SIEM
+
+    %% Infrastructure
+    K8S --> PROM
+    PROM --> GRAF
+    MON --> JAEGER
+
+    classDef serviceBox fill:#e1f5fe,stroke:#01579b,stroke-width:2px
+    classDef dataBox fill:#f3e5f5,stroke:#4a148c,stroke-width:2px
+    classDef extBox fill:#e8f5e8,stroke:#1b5e20,stroke-width:2px
+    classDef infraBox fill:#fff3e0,stroke:#e65100,stroke-width:2px
+
+    class AUTH,AUTHZ,APIKEY,ENCRYPT,COMP,MON serviceBox
+    class POSTGRES,MONGO,REDIS,TSDB dataBox
+    class SSO,VAULT,SIEM,HSM extBox
+    class K8S,PROM,GRAF,JAEGER infraBox

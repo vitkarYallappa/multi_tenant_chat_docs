@@ -1,0 +1,119 @@
+flowchart TD
+    subgraph "Data Input Layer"
+        API[API Requests]
+        WEB[Web Forms]
+        EXT[External Integrations]
+        IMPORT[Data Import]
+    end
+
+    subgraph "Data Processing Layer"
+        VALIDATE[Input Validation<br/>& Sanitization]
+        PII[PII Detection<br/>& Classification]
+        POLICY[Data Policy<br/>Evaluation]
+    end
+
+    subgraph "Encryption Layer"
+        ENCRYPT[Field Encryption<br/>Service]
+        KEYSTORE[Key Management<br/>& Derivation]
+        HSM[Hardware Security<br/>Module]
+        MASK[Data Masking<br/>& Anonymization]
+    end
+
+    subgraph "Storage Layer"
+        POSTGRES[(PostgreSQL<br/>Encrypted Fields)]
+        MONGO[(MongoDB<br/>Encrypted Documents)]
+        REDIS[(Redis<br/>Encrypted Cache)]
+        BACKUP[(Encrypted<br/>Backups)]
+    end
+
+    subgraph "Access Control Layer"
+        AUTHZ[Authorization<br/>Engine]
+        FILTER[Data Filtering<br/>& Projection]
+        DECRYPT[Decryption<br/>Service]
+        AUDIT[Access Audit<br/>& Logging]
+    end
+
+    subgraph "Compliance Layer"
+        GDPR[GDPR<br/>Manager]
+        HIPAA[HIPAA<br/>Manager]
+        RETENTION[Data Retention<br/>& Deletion]
+        EXPORT[Data Export<br/>& Portability]
+    end
+
+    subgraph "Output Layer"
+        RESPONSE[API Responses]
+        REPORTS[Compliance<br/>Reports]
+        ANALYTICS[Analytics<br/>Dashboard]
+        ALERTS[Security<br/>Alerts]
+    end
+
+    %% Data Input Flow
+    API --> VALIDATE
+    WEB --> VALIDATE
+    EXT --> VALIDATE
+    IMPORT --> VALIDATE
+
+    %% Processing Flow
+    VALIDATE --> PII
+    PII --> POLICY
+    POLICY --> ENCRYPT
+
+    %% Encryption Flow
+    ENCRYPT --> KEYSTORE
+    KEYSTORE --> HSM
+    PII --> MASK
+    ENCRYPT --> POSTGRES
+    ENCRYPT --> MONGO
+    ENCRYPT --> REDIS
+    ENCRYPT --> BACKUP
+
+    %% Data Access Flow
+    POSTGRES --> AUTHZ
+    MONGO --> AUTHZ
+    REDIS --> AUTHZ
+    AUTHZ --> FILTER
+    FILTER --> DECRYPT
+    DECRYPT --> KEYSTORE
+    DECRYPT --> AUDIT
+
+    %% Compliance Flow
+    POSTGRES --> GDPR
+    MONGO --> GDPR
+    POSTGRES --> HIPAA
+    MONGO --> HIPAA
+    POSTGRES --> RETENTION
+    MONGO --> RETENTION
+    GDPR --> EXPORT
+    HIPAA --> EXPORT
+
+    %% Output Flow
+    DECRYPT --> RESPONSE
+    GDPR --> REPORTS
+    HIPAA --> REPORTS
+    AUDIT --> ANALYTICS
+    AUDIT --> ALERTS
+
+    %% Data Flow Annotations
+    VALIDATE -.->|"Reject Invalid Data"| ALERTS
+    PII -.->|"PII Detected"| AUDIT
+    POLICY -.->|"Policy Violation"| ALERTS
+    ENCRYPT -.->|"Encryption Failed"| ALERTS
+    AUTHZ -.->|"Access Denied"| AUDIT
+    RETENTION -.->|"Data Deleted"| AUDIT
+
+    %% Styling
+    classDef inputLayer fill:#e8f5e8,stroke:#1b5e20,stroke-width:2px
+    classDef processLayer fill:#e3f2fd,stroke:#0277bd,stroke-width:2px
+    classDef encryptLayer fill:#fce4ec,stroke:#c2185b,stroke-width:2px
+    classDef storageLayer fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px
+    classDef accessLayer fill:#fff3e0,stroke:#f57c00,stroke-width:2px
+    classDef complianceLayer fill:#f1f8e9,stroke:#388e3c,stroke-width:2px
+    classDef outputLayer fill:#e0f2f1,stroke:#00695c,stroke-width:2px
+
+    class API,WEB,EXT,IMPORT inputLayer
+    class VALIDATE,PII,POLICY processLayer
+    class ENCRYPT,KEYSTORE,HSM,MASK encryptLayer
+    class POSTGRES,MONGO,REDIS,BACKUP storageLayer
+    class AUTHZ,FILTER,DECRYPT,AUDIT accessLayer
+    class GDPR,HIPAA,RETENTION,EXPORT complianceLayer
+    class RESPONSE,REPORTS,ANALYTICS,ALERTS outputLayer

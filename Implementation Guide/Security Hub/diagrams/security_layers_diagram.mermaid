@@ -1,0 +1,116 @@
+graph TB
+    subgraph "External Perimeter - Layer 1"
+        subgraph "Network Security"
+            WAF[Web Application Firewall<br/>• OWASP Top 10 Protection<br/>• DDoS Mitigation<br/>• Geographic Filtering]
+            CDN[Content Delivery Network<br/>• Edge Protection<br/>• Rate Limiting<br/>• Bot Detection]
+            LB[Load Balancer<br/>• SSL Termination<br/>• Health Checks<br/>• Traffic Distribution]
+        end
+    end
+
+    subgraph "Application Perimeter - Layer 2"
+        subgraph "API Security"
+            AUTH[Authentication Gateway<br/>• JWT Validation<br/>• API Key Verification<br/>• OAuth Integration]
+            RATE[Rate Limiting<br/>• Per-user Limits<br/>• Per-endpoint Limits<br/>• Adaptive Throttling]
+            CORS[CORS Protection<br/>• Origin Validation<br/>• Method Restriction<br/>• Header Control]
+        end
+    end
+
+    subgraph "Service Layer - Layer 3"
+        subgraph "Identity & Access"
+            MFA[Multi-Factor Authentication<br/>• TOTP/SMS/Email<br/>• Risk-based MFA<br/>• Device Trust]
+            RBAC[Role-Based Access Control<br/>• Hierarchical Roles<br/>• Permission Inheritance<br/>• Resource-level Control]
+            SESSION[Session Management<br/>• Session Isolation<br/>• Concurrent Limits<br/>• Activity Monitoring]
+        end
+    end
+
+    subgraph "Data Layer - Layer 4"
+        subgraph "Data Protection"
+            ENCRYPT[Field-Level Encryption<br/>• AES-256-GCM<br/>• Key Rotation<br/>• HSM Integration]
+            PII[PII Detection & Masking<br/>• ML-based Detection<br/>• Format Preservation<br/>• Data Classification]
+            TENANT[Tenant Isolation<br/>• Database Partitioning<br/>• Query Filtering<br/>• Access Boundaries]
+        end
+    end
+
+    subgraph "Infrastructure Layer - Layer 5"
+        subgraph "System Security"
+            CONTAINER[Container Security<br/>• Image Scanning<br/>• Runtime Protection<br/>• Least Privilege]
+            NETWORK[Network Segmentation<br/>• Micro-segmentation<br/>• Zero Trust Network<br/>• Service Mesh]
+            SECRETS[Secret Management<br/>• Vault Integration<br/>• Key Rotation<br/>• Secure Distribution]
+        end
+    end
+
+    subgraph "Monitoring & Response - Layer 6"
+        subgraph "Security Operations"
+            SIEM[SIEM Integration<br/>• Event Correlation<br/>• Threat Intelligence<br/>• Automated Response]
+            THREAT[Threat Detection<br/>• Behavioral Analysis<br/>• Anomaly Detection<br/>• ML-based Analysis]
+            INCIDENT[Incident Response<br/>• Automated Containment<br/>• Forensic Analysis<br/>• Recovery Procedures]
+        end
+    end
+
+    subgraph "Compliance & Governance - Layer 7"
+        subgraph "Regulatory Compliance"
+            GDPR[GDPR Compliance<br/>• Data Subject Rights<br/>• Consent Management<br/>• Right to Erasure]
+            HIPAA[HIPAA Compliance<br/>• PHI Protection<br/>• Minimum Necessary<br/>• Audit Logging]
+            SOC2[SOC 2 Compliance<br/>• Trust Criteria<br/>• Control Implementation<br/>• Continuous Monitoring]
+        end
+    end
+
+    %% Layer Interactions
+    WAF --> AUTH
+    CDN --> RATE
+    LB --> CORS
+    
+    AUTH --> MFA
+    RATE --> RBAC
+    CORS --> SESSION
+    
+    MFA --> ENCRYPT
+    RBAC --> PII
+    SESSION --> TENANT
+    
+    ENCRYPT --> CONTAINER
+    PII --> NETWORK
+    TENANT --> SECRETS
+    
+    CONTAINER --> SIEM
+    NETWORK --> THREAT
+    SECRETS --> INCIDENT
+    
+    SIEM --> GDPR
+    THREAT --> HIPAA
+    INCIDENT --> SOC2
+
+    %% Security Event Flow
+    THREAT -.->|Security Events| SIEM
+    SIEM -.->|Alerts| INCIDENT
+    INCIDENT -.->|Evidence| GDPR
+    INCIDENT -.->|Evidence| HIPAA
+    INCIDENT -.->|Evidence| SOC2
+
+    %% Audit Flow
+    MFA -.->|Access Logs| SIEM
+    RBAC -.->|Permission Logs| SIEM
+    ENCRYPT -.->|Encryption Logs| SIEM
+    PII -.->|Data Access Logs| SIEM
+
+    %% Compliance Flow
+    GDPR -.->|Requirements| ENCRYPT
+    HIPAA -.->|Requirements| PII
+    SOC2 -.->|Requirements| TENANT
+
+    %% Styling
+    classDef layer1 fill:#ffebee,stroke:#c62828,stroke-width:3px
+    classDef layer2 fill:#e8f5e8,stroke:#2e7d32,stroke-width:3px
+    classDef layer3 fill:#e3f2fd,stroke:#1565c0,stroke-width:3px
+    classDef layer4 fill:#fce4ec,stroke:#ad1457,stroke-width:3px
+    classDef layer5 fill:#fff3e0,stroke:#ef6c00,stroke-width:3px
+    classDef layer6 fill:#f3e5f5,stroke:#6a1b9a,stroke-width:3px
+    classDef layer7 fill:#e0f2f1,stroke:#00695c,stroke-width:3px
+
+    class WAF,CDN,LB layer1
+    class AUTH,RATE,CORS layer2
+    class MFA,RBAC,SESSION layer3
+    class ENCRYPT,PII,TENANT layer4
+    class CONTAINER,NETWORK,SECRETS layer5
+    class SIEM,THREAT,INCIDENT layer6
+    class GDPR,HIPAA,SOC2 layer7
